@@ -1,0 +1,11 @@
+{
+  "version_name": "1.0.0",
+  "version_code": 2,
+  "url_apk": "https://github.com/TU_USUARIO/TU_REPOSITORIO/releases/latest/download/app-release.apk",
+  "cambios": [
+    "¡Nuevo selector de tipografías globales en configuraciones!",
+    "Implementado editor de texto enriquecido (negritas, cursivas y listas).",
+    "Estructura modular de la app mejorada para mayor escalabilidad.",
+    "Bugs menores corregidos en la persistencia de SQLite."
+  ]
+}
