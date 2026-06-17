@@ -5,7 +5,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActualizadorService {
-  // Reemplaza esta URL por el enlace "RAW" de tu archivo JSON en GitHub
   static const String _urlJsonRemoto =
       'https://raw.githubusercontent.com/Moisescx/stikfi/refs/heads/main/version.json';
 

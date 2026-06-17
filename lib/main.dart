@@ -34,7 +34,7 @@ class BlockNotasApp extends StatelessWidget {
       valueListenable: fuenteGlobalNotifier,
       builder: (context, fuente, child) {
         return MaterialApp(
-          title: 'Bloc de Notas Post-it',
+          title: 'Stikfi',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,
