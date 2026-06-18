@@ -8,8 +8,7 @@ NUEVA_VERSION=$(grep "^version: " pubspec.yaml | awk '{print $2}')
 echo "Versión actualizada exitosamente a: $NUEVA_VERSION"
 
 echo "Compilando APK con ofuscación y firma de seguridad..."
-flutter build apk --release --obfuscate --split-debug-info=./debug_info
-
+flutter build apk --release --obfuscate --split-debug-info=./debug_info --no-tree-shake-icons --split-per-abi
 
 echo "¡Compilación terminada!"
 echo "Tu APK seguro está listo en: build/app/outputs/flutter-apk/app-release.apk"

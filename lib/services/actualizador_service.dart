@@ -8,7 +8,18 @@ class ActualizadorService {
   static const String _urlJsonRemoto =
       'https://raw.githubusercontent.com/Moisescx/stikfi/refs/heads/main/version.json';
 
-  static Future<void> verificarActualizacion(BuildContext context) async {
+  static Future<void> verificarActualizacion(
+    BuildContext context, {
+    bool comprobacionManual = false,
+  }) async {
+    if (comprobacionManual) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Buscando Actualizaciones...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
     try {
       final infoPaquete = await PackageInfo.fromPlatform();
       final int versionCodeLocal = int.parse(infoPaquete.buildNumber);
@@ -94,8 +105,27 @@ class ActualizadorService {
             );
           },
         );
+      } else {
+        if (comprobacionManual && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Ya tienes la ultima version de Stikfi!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     } catch (e) {
+      if (comprobacionManual && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Error al buscar actualizaciones. Revisa tu conexion',
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
       debugPrint('Error al verificar actualización: $e');
     }
   }

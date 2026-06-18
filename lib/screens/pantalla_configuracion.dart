@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../services/actualizador_service.dart';
 
 class PantallaConfiguracion extends StatelessWidget {
   const PantallaConfiguracion({super.key});
@@ -135,6 +136,20 @@ class PantallaConfiguracion extends StatelessWidget {
 
           // SECCIÓN: SOBRE LA APP
           _buildSeccionTitulo('SOBRE LA APP'),
+          ListTile(
+            leading: const Icon(Icons.system_update_outlined),
+            title: const Text('Buscar Actualizaciones'),
+            subtitle: const Text(
+              'Comprobar si hay una nueva version disponible',
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              ActualizadorService.verificarActualizacion(
+                context,
+                comprobacionManual: true,
+              );
+            },
+          ),
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('Versión de la aplicación'),

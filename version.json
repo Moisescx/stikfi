@@ -1,7 +1,7 @@
 {
   "version_name": "1.0.0",
   "version_code": 2,
-  "url_apk": "https://github.com/Moisescx/stikfi/releases/latest/download/app-release.apk",
+  "url_apk": "https://github.com/Moisescx/stikfi/releases/latest/download/stikfi.apk",
   "cambios": [
     "¡Nuevo selector de tipografías globales en configuraciones!",
     "Implementado editor de texto enriquecido (negritas, cursivas y listas).",

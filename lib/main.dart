@@ -16,18 +16,6 @@ final ValueNotifier<String> fuenteGlobalNotifier = ValueNotifier<String>(
 class BlockNotasApp extends StatelessWidget {
   const BlockNotasApp({super.key});
 
-  TextTheme _obtenerTextTheme(String nombreFuente) {
-    switch (nombreFuente) {
-      case 'Quicksand':
-        return GoogleFonts.quicksandTextTheme();
-      case 'Nunito':
-        return GoogleFonts.nunitoTextTheme();
-      case 'Inter':
-      default:
-        return GoogleFonts.interTextTheme();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
@@ -39,7 +27,7 @@ class BlockNotasApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorSchemeSeed: const Color(0xFFFFE082),
-            textTheme: _obtenerTextTheme(fuente),
+            textTheme: GoogleFonts.getTextTheme(fuente),
           ),
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
