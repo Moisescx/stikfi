@@ -44,4 +44,26 @@ class Nota {
       sincronizado: map['sincronizado'] ?? 0,
     );
   }
+
+  Object? operator [](String key) {
+    switch (key) {
+      case 'id':
+        return id;
+      case 'titulo':
+        return titulo;
+      case 'contenido':
+      case 'contenido_plano':
+        return contenido;
+      case 'colorFondo':
+        return colorFondo;
+      case 'fechaCreacion':
+        return fechaCreacion;
+      case 'fechaActualizacion':
+        return fechaActualizacion;
+      case 'sincronizado':
+        return sincronizado;
+      default:
+        return null;
+    }
+  }
 }

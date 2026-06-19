@@ -93,10 +93,11 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
     if (mounted) Navigator.pop(context, true);
   }
 
-  void _mostrarSelectorDeColor() {
+  void _mostrarSelectorDeColor(bool esOscuro) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      // Color dinámico para el fondo del menú inferior
+      backgroundColor: esOscuro ? const Color(0xFF2D2D2D) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -112,15 +113,31 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Color de fondo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: esOscuro ? Colors.white : Colors.black87,
+                ),
               ),
               const SizedBox(height: 16),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: _coloresPostIt.map((color) {
+                    // Mezclamos el color en la paleta del selector también para que el usuario vea cómo quedará
+                    Color colorMuestra = color;
+                    if (esOscuro) {
+                      colorMuestra =
+                          Color.lerp(
+                            colorMuestra,
+                            const Color(0xFF2D2D2D),
+                            0.75,
+                          ) ??
+                          colorMuestra;
+                    }
+
                     final estaSeleccionado = _colorSeleccionado == color;
                     return GestureDetector(
                       onTap: () {
@@ -132,17 +149,20 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: color,
+                          color: colorMuestra,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: estaSeleccionado
-                                ? Colors.black54
-                                : Colors.black12,
+                                ? (esOscuro ? Colors.white : Colors.black54)
+                                : (esOscuro ? Colors.white12 : Colors.black12),
                             width: estaSeleccionado ? 3 : 1,
                           ),
                         ),
                         child: estaSeleccionado
-                            ? const Icon(Icons.check, color: Colors.black54)
+                            ? Icon(
+                                Icons.check,
+                                color: esOscuro ? Colors.white : Colors.black54,
+                              )
                             : null,
                       ),
                     );
@@ -158,16 +178,32 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Detectamos el estado del tema
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
+    // 2. Aplicamos la mezcla matemática para suavizar el fondo en modo oscuro
+    Color fondoAdaptativo = _colorSeleccionado;
+    if (esOscuro) {
+      fondoAdaptativo =
+          Color.lerp(fondoAdaptativo, const Color(0xFF1E1E1E), 0.75) ??
+          fondoAdaptativo;
+    }
+
+    // 3. Colores de texto y elementos según el tema
+    final colorTextoPrimario = esOscuro ? Colors.white : Colors.black87;
+    final colorTextoSecundario = esOscuro ? Colors.white38 : Colors.black38;
+    final colorIconos = esOscuro ? Colors.white : Colors.black87;
+
     return Scaffold(
-      backgroundColor: _colorSeleccionado,
+      backgroundColor: fondoAdaptativo, // Fondo inteligente
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: colorIconos),
         actions: [
           IconButton(
             icon: const Icon(Icons.palette_outlined),
-            onPressed: _mostrarSelectorDeColor,
+            onPressed: () => _mostrarSelectorDeColor(esOscuro),
           ),
           IconButton(
             icon: const Icon(Icons.check, size: 30),
@@ -178,26 +214,26 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
       ),
       body: Column(
         children: [
-          // 1. El campo del Título permanece fijo arriba
+          // 1. Campo del Título adaptativo
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: TextField(
               controller: _tituloController,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: colorTextoPrimario,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Título de la nota...',
-                hintStyle: TextStyle(color: Colors.black38),
+                hintStyle: TextStyle(color: colorTextoSecundario),
                 border: InputBorder.none,
               ),
               textCapitalization: TextCapitalization.sentences,
             ),
           ),
 
-          // 2. El Editor ahora ocupa todo el espacio central de la nota
+          // 2. Editor de Quill adaptativo
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -213,15 +249,16 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
             ),
           ),
 
-          // 3. La barra de herramientas al pie de la pantalla, ultra compacta
+          // 3. Barra de herramientas adaptativa al pie
           SafeArea(
             child: Container(
-              // Un fondo sutil semi-transparente para integrarse con el color del post-it
-              color: Colors.black.withValues(alpha: 0.04),
+              // Usamos un fondo que contraste sutilmente dependiendo del modo
+              color: esOscuro
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.04),
               child: quill.QuillSimpleToolbar(
                 controller: _quillController,
-                config: const quill.QuillSimpleToolbarConfig(
-                  // Desactivamos menús complejos para maximizar espacio
+                config: quill.QuillSimpleToolbarConfig(
                   showFontFamily: false,
                   showFontSize: false,
                   showSearchButton: false,
@@ -231,8 +268,7 @@ class _PantallaEdicionState extends State<PantallaEdicion> {
                   showColorButton: false,
                   showBackgroundColorButton: false,
                   showAlignmentButtons: false,
-                  showHeaderStyle:
-                      false, // Quita los formatos de encabezado H1, H2
+                  showHeaderStyle: false,
                   showQuote: false,
                   showCodeBlock: false,
                   showLink: false,

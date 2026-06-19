@@ -10,5 +10,8 @@ echo "Versión actualizada exitosamente a: $NUEVA_VERSION"
 echo "Compilando APK con ofuscación y firma de seguridad..."
 flutter build apk --release --obfuscate --split-debug-info=./debug_info --no-tree-shake-icons --split-per-abi
 
+echo "Renombrando el archivo optimizado a stikfi.apk..."
+mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/stikfi.apk
+
 echo "¡Compilación terminada!"
-echo "Tu APK seguro está listo en: build/app/outputs/flutter-apk/app-release.apk"
+echo "Tu APK seguro y optimizado está listo en: build/app/outputs/flutter-apk/stikfi.apk"

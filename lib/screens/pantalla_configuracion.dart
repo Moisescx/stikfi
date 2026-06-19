@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/actualizador_service.dart';
 
@@ -92,13 +93,24 @@ class PantallaConfiguracion extends StatelessWidget {
             },
           ),
           const Divider(indent: 16, endIndent: 16),
-          ListTile(
-            leading: const Icon(Icons.dark_mode_outlined),
-            title: const Text('Tema de la aplicación'),
-            subtitle: const Text('Por defecto del sistema'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // Marcador de posición para el futuro modo oscuro
+          // Envolvemos el Switch en un escuchador para que se actualice visualmente
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: temaGlobalNotifier,
+            builder: (context, modoActual, child) {
+              return SwitchListTile(
+                title: const Text('Modo Oscuro'),
+                subtitle: const Text('Cambiar la apariencia de la aplicación.'),
+                secondary: const Icon(Icons.dark_mode_outlined),
+                // Ahora el valor depende de lo que dicte el escuchador
+                value: modoActual == ThemeMode.dark,
+                onChanged: (bool activado) async {
+                  temaGlobalNotifier.value = activado
+                      ? ThemeMode.dark
+                      : ThemeMode.light;
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('modo_oscuro', activado);
+                },
+              );
             },
           ),
 

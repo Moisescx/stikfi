@@ -47,3 +47,5 @@ app.*.map.json
 # Archivos de seguridad
 android/app/upload-keystore.jks
 android/key.properties
+
+ayuda.txt

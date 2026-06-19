@@ -6,6 +6,7 @@ import 'pantalla_configuracion.dart';
 import '../services/actualizador_service.dart';
 import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:share_plus/share_plus.dart'; // Importación para compartir notas
 
 class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
@@ -19,7 +20,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
   List<Nota> _notas = [];
   bool _cargando = true;
 
-  // Función para convertir el código JSON a texto normal para la previsualización
   String _extraerTextoPlano(String contenido) {
     try {
       if (contenido.trim().startsWith('[')) {
@@ -43,7 +43,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
     });
   }
 
-  // Lee las notas desde la base de datos y actualiza la UI
   Future<void> _cargarNotas() async {
     setState(() => _cargando = true);
     final mapas = await _dbHelper.getNotas();
@@ -58,7 +57,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
       context,
       MaterialPageRoute(builder: (context) => PantallaEdicion(nota: nota)),
     );
-    if (resultado == true) _cargarNotas(); // Recarga si se guardó o editó
+    if (resultado == true) _cargarNotas();
   }
 
   Future<void> _confirmarEliminacion(int id) async {
@@ -67,7 +66,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
       builder: (context) => AlertDialog(
         title: const Text('¿Eliminar Nota?'),
         content: const Text(
-          'Esta accion no se puede deshacer. ¿Deseas continuar?',
+          'Esta acción no se puede deshacer. ¿Deseas continuar?',
         ),
         actions: [
           TextButton(
@@ -87,16 +86,65 @@ class _PantallaInicioState extends State<PantallaInicio> {
     }
   }
 
+  // Menú emergente al mantener presionada una nota
+  void _mostrarMenuOpciones(Nota nota) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext contextBottomSheet) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.share_outlined),
+                title: const Text('Compartir nota'),
+                onTap: () {
+                  Navigator.pop(contextBottomSheet);
+                  final textoLimpio = _extraerTextoPlano(nota.contenido);
+                  final textoCompleto = nota.titulo.isNotEmpty
+                      ? '${nota.titulo}\n\n$textoLimpio'
+                      : textoLimpio;
+                  SharePlus.instance.share(ShareParams(text: textoCompleto));
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.redAccent,
+                ),
+                title: const Text(
+                  'Eliminar nota',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+                onTap: () {
+                  Navigator.pop(contextBottomSheet);
+                  _confirmarEliminacion(nota.id!);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Detectamos si el sistema está usando el modo oscuro actualmente
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Post-its'),
+        title: const Text('Stikfi'), // Actualizado con tu nombre oficial
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Configuracion',
+            tooltip: 'Configuración',
             onPressed: () {
               Navigator.push(
                 context,
@@ -116,20 +164,39 @@ class _PantallaInicioState extends State<PantallaInicio> {
               padding: const EdgeInsets.all(8.0),
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Dos columnas tipo tablero
+                  crossAxisCount: 2,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                 ),
                 itemCount: _notas.length,
                 itemBuilder: (context, index) {
                   final nota = _notas[index];
+
+                  // Lógica matemática para atenuar los colores brillantes en modo oscuro
+                  Color colorFondoNota = Color(nota.colorFondo);
+                  if (esOscuro) {
+                    // Mezcla un 75% del color base oscuro de la app con un 25% del color del post-it
+                    colorFondoNota =
+                        Color.lerp(
+                          colorFondoNota,
+                          const Color(0xFF2D2D2D),
+                          0.75,
+                        ) ??
+                        colorFondoNota;
+                  }
+
                   return InkWell(
                     onTap: () => _abrirPantallaEdicion(nota: nota),
-                    onLongPress: () => _confirmarEliminacion(nota.id!),
+                    onLongPress: () => _mostrarMenuOpciones(
+                      nota,
+                    ), // Cambiado por el menú modular
                     borderRadius: BorderRadius.circular(8),
                     child: Card(
-                      color: Color(nota.colorFondo),
-                      elevation: 4,
+                      color:
+                          colorFondoNota, // Aplicación del color inteligente calculado arriba
+                      elevation: esOscuro
+                          ? 2
+                          : 4, // Menos sombra en modo oscuro para evitar ruidos visuales
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -141,9 +208,12 @@ class _PantallaInicioState extends State<PantallaInicio> {
                             if (nota.titulo.isNotEmpty)
                               Text(
                                 nota.titulo,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  color: esOscuro
+                                      ? Colors.white
+                                      : Colors.black87,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -153,7 +223,12 @@ class _PantallaInicioState extends State<PantallaInicio> {
                             Expanded(
                               child: Text(
                                 _extraerTextoPlano(nota.contenido),
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: esOscuro
+                                      ? Colors.white70
+                                      : Colors.black54,
+                                ),
                                 overflow: TextOverflow.fade,
                               ),
                             ),
