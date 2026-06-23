@@ -1,11 +1,12 @@
 {
   "version_name": "1.2.0",
-  "version_code": 4,
+  "version_code": 5,
   "url_apk": "https://github.com/Moisescx/stikfi/releases/latest/download/stikfi.apk",
   "cambios": [
-"🔍 Búsqueda inteligente: Encuentra notas al instante escribiendo palabras del título o contenido.",
+    "Búsqueda inteligente: Encuentra notas al instante escribiendo palabras del título o contenido.",
     "Fijar notas: Mantén tus post-its más importantes siempre al principio del tablero.",
     "Nueva identidad: Estrenamos el icono oficial de Stikfi en alta resolución.",
     "Corrección de red: Solucionado el error que bloqueaba la descarga de tipografías y la búsqueda de actualizaciones.",
-    "Base de datos blindada: Nuevo sistema de migración que protege tus notas al actualizar la app."    ]
+    "Base de datos blindada: Nuevo sistema de migración que protege tus notas al actualizar la app."
+  ]
 }
