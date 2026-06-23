@@ -1,11 +1,11 @@
 {
-  "version_name": "1.1.0",
-  "version_code": 3,
+  "version_name": "1.2.0",
+  "version_code": 4,
   "url_apk": "https://github.com/Moisescx/stikfi/releases/latest/download/stikfi.apk",
   "cambios": [
-    "¡Nuevo Modo Oscuro inteligente y elegante!",
-    "Menú emergente añadido: ahora puedes compartir tus notas a otras apps.",
-    "Colores de post-its adaptativos que cuidan tu vista en entornos oscuros.",
-    "Corrección de errores y mejoras en el editor de texto."
-    ]
+"🔍 Búsqueda inteligente: Encuentra notas al instante escribiendo palabras del título o contenido.",
+    "Fijar notas: Mantén tus post-its más importantes siempre al principio del tablero.",
+    "Nueva identidad: Estrenamos el icono oficial de Stikfi en alta resolución.",
+    "Corrección de red: Solucionado el error que bloqueaba la descarga de tipografías y la búsqueda de actualizaciones.",
+    "Base de datos blindada: Nuevo sistema de migración que protege tus notas al actualizar la app."    ]
 }

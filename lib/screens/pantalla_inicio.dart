@@ -6,7 +6,7 @@ import 'pantalla_configuracion.dart';
 import '../services/actualizador_service.dart';
 import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:share_plus/share_plus.dart'; // Importación para compartir notas
+import 'package:share_plus/share_plus.dart';
 
 class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
@@ -18,7 +18,10 @@ class PantallaInicio extends StatefulWidget {
 class _PantallaInicioState extends State<PantallaInicio> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Nota> _notas = [];
+  List<Nota> _notasFiltradas = [];
   bool _cargando = true;
+  bool _estaBuscando = false;
+  final _buscadorController = TextEditingController();
 
   String _extraerTextoPlano(String contenido) {
     try {
@@ -43,12 +46,53 @@ class _PantallaInicioState extends State<PantallaInicio> {
     });
   }
 
+  @override
+  void dispose() {
+    _buscadorController.dispose();
+    super.dispose();
+  }
+
   Future<void> _cargarNotas() async {
     setState(() => _cargando = true);
-    final mapas = await _dbHelper.getNotas();
-    setState(() {
+
+    try {
+      final mapas = await _dbHelper.getNotas();
       _notas = mapas.map((map) => Nota.fromMap(map)).toList();
-      _cargando = false;
+
+      // Aplicamos el filtro si el usuario estaba escribiendo algo
+      if (_estaBuscando && _buscadorController.text.isNotEmpty) {
+        final query = _buscadorController.text.toLowerCase();
+        _notasFiltradas = _notas.where((nota) {
+          final titulo = nota.titulo.toLowerCase();
+          final contenido = _extraerTextoPlano(nota.contenido).toLowerCase();
+          return titulo.contains(query) || contenido.contains(query);
+        }).toList();
+      } else {
+        _notasFiltradas = _notas;
+      }
+    } catch (e) {
+      debugPrint("Error al cargar notas desde SQLite: $e");
+      _notas = [];
+      _notasFiltradas = [];
+    } finally {
+      // Garantizamos que el estado de carga siempre termine, haya error o no
+      setState(() => _cargando = false);
+    }
+  }
+
+  void _filtrarNotas(String consulta) {
+    setState(() {
+      if (consulta.isEmpty) {
+        _notasFiltradas = _notas;
+      } else {
+        _notasFiltradas = _notas.where((nota) {
+          final titulo = nota.titulo.toLowerCase();
+          final contenido = _extraerTextoPlano(nota.contenido).toLowerCase();
+          final query = consulta.toLowerCase();
+
+          return titulo.contains(query) || contenido.contains(query);
+        }).toList();
+      }
     });
   }
 
@@ -86,7 +130,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
     }
   }
 
-  // Menú emergente al mantener presionada una nota
   void _mostrarMenuOpciones(Nota nota) {
     showModalBottomSheet(
       context: context,
@@ -108,6 +151,29 @@ class _PantallaInicioState extends State<PantallaInicio> {
                       ? '${nota.titulo}\n\n$textoLimpio'
                       : textoLimpio;
                   SharePlus.instance.share(ShareParams(text: textoCompleto));
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Icon(
+                  nota.fijada ? Icons.push_pin : Icons.push_pin_outlined,
+                ),
+                title: Text(nota.fijada ? 'Desfijar nota' : 'Fijar nota'),
+                onTap: () async {
+                  Navigator.pop(contextBottomSheet);
+
+                  final notaActualizada = Nota(
+                    id: nota.id,
+                    titulo: nota.titulo,
+                    contenido: nota.contenido,
+                    colorFondo: nota.colorFondo,
+                    fechaCreacion: nota.fechaCreacion,
+                    fechaActualizacion: DateTime.now(),
+                    fijada: !nota.fijada,
+                  );
+
+                  await _dbHelper.updateNota(notaActualizada.toMap());
+                  _cargarNotas();
                 },
               ),
               const Divider(height: 1),
@@ -134,32 +200,76 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
   @override
   Widget build(BuildContext context) {
-    // Detectamos si el sistema está usando el modo oscuro actualmente
     final esOscuro = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stikfi'), // Actualizado con tu nombre oficial
+        title: _estaBuscando
+            ? TextField(
+                controller: _buscadorController,
+                autofocus: true,
+                style: TextStyle(
+                  color: esOscuro ? Colors.white : Colors.black87,
+                  fontSize: 18,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Buscar nota...',
+                  hintStyle: TextStyle(
+                    color: esOscuro ? Colors.white38 : Colors.black38,
+                  ),
+                  border: InputBorder.none,
+                ),
+                onChanged: _filtrarNotas,
+              )
+            : const Text('Stikfi'),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Configuración',
+            icon: Icon(_estaBuscando ? Icons.close : Icons.search),
+            tooltip: _estaBuscando ? 'Cerrar Búsqueda' : 'Buscar',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PantallaConfiguracion(),
-                ),
-              );
+              setState(() {
+                if (_estaBuscando) {
+                  _estaBuscando = false;
+                  _buscadorController.clear();
+                  _notasFiltradas = _notas;
+                } else {
+                  _estaBuscando = true;
+                }
+              });
             },
           ),
+          if (!_estaBuscando)
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Configuración',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PantallaConfiguracion(),
+                  ),
+                );
+              },
+            ),
         ],
       ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
-          : _notas.isEmpty
-          ? const Center(child: Text('No hay notas aún. ¡Crea una!'))
+          : _notasFiltradas
+                .isEmpty // <-- CORREGIDO: Ahora vigila la lista correcta
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  _estaBuscando
+                      ? 'No se encontraron notas que coincidan.'
+                      : 'No hay notas aún. ¡Crea una!',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
           : Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.builder(
@@ -168,14 +278,12 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                 ),
-                itemCount: _notas.length,
+                itemCount: _notasFiltradas.length,
                 itemBuilder: (context, index) {
-                  final nota = _notas[index];
+                  final nota = _notasFiltradas[index];
 
-                  // Lógica matemática para atenuar los colores brillantes en modo oscuro
                   Color colorFondoNota = Color(nota.colorFondo);
                   if (esOscuro) {
-                    // Mezcla un 75% del color base oscuro de la app con un 25% del color del post-it
                     colorFondoNota =
                         Color.lerp(
                           colorFondoNota,
@@ -187,16 +295,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
                   return InkWell(
                     onTap: () => _abrirPantallaEdicion(nota: nota),
-                    onLongPress: () => _mostrarMenuOpciones(
-                      nota,
-                    ), // Cambiado por el menú modular
+                    onLongPress: () => _mostrarMenuOpciones(nota),
                     borderRadius: BorderRadius.circular(8),
                     child: Card(
-                      color:
-                          colorFondoNota, // Aplicación del color inteligente calculado arriba
-                      elevation: esOscuro
-                          ? 2
-                          : 4, // Menos sombra en modo oscuro para evitar ruidos visuales
+                      color: colorFondoNota,
+                      elevation: esOscuro ? 2 : 4,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -205,21 +308,39 @@ class _PantallaInicioState extends State<PantallaInicio> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (nota.titulo.isNotEmpty)
-                              Text(
-                                nota.titulo,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: esOscuro
-                                      ? Colors.white
-                                      : Colors.black87,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: nota.titulo.isNotEmpty
+                                      ? Text(
+                                          nota.titulo,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: esOscuro
+                                                ? Colors.white
+                                                : Colors.black87,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : const SizedBox.shrink(),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                if (nota.fijada)
+                                  Icon(
+                                    Icons.push_pin,
+                                    size: 16,
+                                    color: esOscuro
+                                        ? Colors.white70
+                                        : Colors.black54,
+                                  ),
+                              ],
+                            ),
+
                             if (nota.contenido.isNotEmpty)
                               const SizedBox(height: 8),
+
                             Expanded(
                               child: Text(
                                 _extraerTextoPlano(nota.contenido),

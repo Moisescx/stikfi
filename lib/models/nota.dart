@@ -8,6 +8,7 @@ class Nota {
   final DateTime fechaCreacion;
   final DateTime fechaActualizacion;
   final int sincronizado;
+  final bool fijada;
 
   Nota({
     this.id,
@@ -17,6 +18,7 @@ class Nota {
     required this.fechaCreacion,
     required this.fechaActualizacion,
     this.sincronizado = 0,
+    this.fijada = false,
   });
 
   // Convierte un objeto Nota en un Map para guardarlo en SQLite
@@ -29,6 +31,7 @@ class Nota {
       'fechaCreacion': fechaCreacion.toIso8601String(),
       'fechaActualizacion': fechaActualizacion.toIso8601String(),
       'sincronizado': sincronizado,
+      'fijada': fijada ? 1 : 0,
     };
   }
 
@@ -42,6 +45,7 @@ class Nota {
       fechaCreacion: DateTime.parse(map['fechaCreacion']),
       fechaActualizacion: DateTime.parse(map['fechaActualizacion']),
       sincronizado: map['sincronizado'] ?? 0,
+      fijada: map['fijada'] == 1,
     );
   }
 
@@ -62,6 +66,8 @@ class Nota {
         return fechaActualizacion;
       case 'sincronizado':
         return sincronizado;
+      case 'fijada':
+        return fijada;
       default:
         return null;
     }

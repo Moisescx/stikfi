@@ -166,7 +166,7 @@ class PantallaConfiguracion extends StatelessWidget {
             leading: Icon(Icons.info_outline),
             title: Text('Versión de la aplicación'),
             trailing: Text(
-              '1.0.0',
+              '1.2.0',
               style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
             ),
           ),
